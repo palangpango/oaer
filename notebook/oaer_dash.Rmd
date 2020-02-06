@@ -1,0 +1,19 @@
+---
+output:
+  flexdashboard::flex_dashboard: default
+  html_document: default
+---
+library(shiny)
+
+---
+title: "Thai Rice Export"
+output: flexdashboard::flex_dashboard
+runtime: shiny
+---
+
+```{r global, include=FALSE}
+# load data 
+source("oaer.R")
+```
+
+
