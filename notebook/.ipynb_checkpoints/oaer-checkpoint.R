@@ -1,27 +1,24 @@
 library(tidyverse)
 library(readxl)
-path <- "../data/trade/export_1006_th.xls"
+library(leaflet)
+library(RColorBrewer)
+
 
 #จัดการข้อมูล
+path <- "../data/trade/export_1006_th.xls"
 export_1006 <- read_excel(path, skip=1, na = c("-","",0)) %>%
     gather("type_year", "amount", -(1:7)) %>%
     drop_na("amount") %>%
     separate(type_year, sep="25", into=c("type","year")) %>%
     mutate(year_thai = as.numeric(paste0("25", year))) %>%
     mutate(year = year_thai-543)
-head(export_1006)
-
 
 path <- "../data/_meta/countries.xlsx"
 tbl_countries <- read_excel(path, skip=0, na = c("-",""))
-head(tbl_countries)
-
 
 path <- "../data/_meta/hs1006_th.xlsx"
 tbl_hs1006 <- read_excel(path, sheet='hs_rice', skip=0)
 tbl_hs1006_group <- read_excel(path, sheet='rice_group', skip=0)
-head(tbl_hs1006)
-head(tbl_hs1006_group)
 
 
 # join countries&hscode 
@@ -29,7 +26,7 @@ head(tbl_hs1006_group)
 export_1006_joined <- export_1006 %>% 
     left_join(tbl_countries, by=c("country_name_th" = "country_name_oae")) %>%
     left_join(tbl_hs1006, by=c("hscode" = "hscode"))
-head(export_1006_joined)
+
 
 export_by_year_country_varities <- export_1006_joined %>%
     filter(type=="vol") %>%
@@ -39,11 +36,8 @@ export_by_year_country_varities <- export_1006_joined %>%
 
 ex_vol_hommali_2010 <- export_by_year_country_varities %>%
     filter(year == 2010 & varities == "hommali")
-head(ex_vol_hommali_2010)
 
 
-class(world_map)
-library(leaflet)
 world_map <- geojsonio::geojson_read("../data/map/world_lowres.geojson", what = "sp")
 world_map_joined <- world_map
 world_map_joined@data <- world_map_joined@data %>%
@@ -54,7 +48,7 @@ world_map_joined@data %>%
     filter(grepl('United', sovereignt))
 
 
-library(RColorBrewer)
+
 mybins <- c(0,10,20,50,100,200,Inf)
 mypalette <- colorBin( palette="YlOrRd", domain=world_map_joined$export_vol, na.color="transparent", bins=mybins)
 mytext <- paste(
@@ -63,18 +57,6 @@ mytext <- paste(
     sep="") %>%
   lapply(htmltools::HTML)
 
-
-leaflet(world_map_joined) %>%
-    addTiles() %>%
-    setView( lat=10, lng=0 , zoom=2) %>%
-    addPolygons(
-        fillColor = ~mypalette(export_vol),
-        label = mytext,
-        stroke = FALSE, 
-        fillOpacity = 0.5, 
-        smoothFactor = 0.5,
-        ) %>%
-    addLegend(pal=mypalette, values=~export_vol, opacity=0.9, title = "Hommali Volume 2010", position = "bottomleft" )
 
 
 query <- function(data, year=2018, varities='hommali', data_type='vol') {
@@ -90,7 +72,6 @@ query <- function(data, year=2018, varities='hommali', data_type='vol') {
         summarize(amount = sum(amount))
      return(res)
 }
-query(export_1006_joined)
 
 
 plot_map <- function(map, data, year=2018, varities='hommali', data_type='vol') {
