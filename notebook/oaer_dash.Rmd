@@ -1,19 +1,92 @@
 ---
-output:
-  flexdashboard::flex_dashboard: default
-  html_document: default
----
-library(shiny)
-
----
-title: "Thai Rice Export"
-output: flexdashboard::flex_dashboard
-runtime: shiny
+title: "Thai Rice Export Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    runtime: shiny
 ---
 
 ```{r global, include=FALSE}
-# load data 
+# load data in 'global' chunk so it can be shared by all users of the dashboard
+library(shiny)
 source("oaer.R")
 ```
 
+Sidebar {.sidebar}
+=====================================
 
+```{r}
+selectInput('year', 'Year',
+            selected=max(export_all$year),
+            unique(export_all$year))
+selectInput('varities', 'Rice Varities',
+            selected="hommali",
+            unique(export_all$varities))
+selectInput('dtype', 'Data Type',
+            selected='vol', 
+            unique(export_all$type))
+```
+
+Page 1
+=====================================  
+Row {data-height=500}
+-------------------------------------
+
+### Map
+
+```{r}
+renderLeaflet(
+  plot_map(export_all,
+           year=input$year,
+           varities=input$varities,
+           data_type=input$dtype
+           ))
+```
+
+Row {data-height=500}
+-------------------------------------
+
+### Streamgraph
+
+```{r}
+    renderStreamgraph(
+    plot_tstop5(export_all,
+                year=input$year,
+                varities=input$varities,
+                data_type=input$dtype
+                ))
+```
+
+### Bar
+
+```{r}
+    renderPlotly(
+    plot_bar(export_all,
+               year=input$year,
+               varities=input$varities,
+               data_type=input$dtype
+               ))
+```
+
+Page 2
+=====================================
+### Plot
+```{r}
+renderPlotly(
+    plot_top20(export_all,
+               year=input$year,
+               varities=input$varities,
+               data_type=input$dtype
+               ))
+```
+
+Page 3
+=====================================
+Column
+-----------------------------------------------------------------------
+### Table
+```{r}
+renderDataTable(
+    create_table(export_all, varities=input$varities)
+    )
+```

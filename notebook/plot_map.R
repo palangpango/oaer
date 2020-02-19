@@ -1,30 +1,3 @@
-world_map <- geojsonio::geojson_read("../data/map/world_lowres.geojson", what = "sp")
-
-query <- function(data, year=NULL, varities=NULL, data_type='vol') {
-    # input = a data frame rice export from thailand 
-    # output = a data frame by by hscode and countries and year-month
-    
-    if(is.null(year)) {
-        year_list <- unique(data$year) 
-    } else {
-        year_list <- year
-    }
-    
-    if(is.null(varities)) {
-        varities_list <- unique(data$varities) 
-    } else {
-        varities_list <- varities
-    }
-    
-    res <- data %>%
-        filter(type == data_type) %>%
-        group_by(year, varities, iso3, region) %>%
-        filter(year %in% year_list & varities %in% varities_list) %>%
-        mutate(amount = amount/1e6) %>%
-        summarize(amount = sum(amount))
-    return(res)
-}
-
 plot_map <- function(data, map=world_map, year=2018, varities='hommali', data_type='vol') {
     # step 1 query data given by year varities and data_type
     # step 2 left join queied data into world_map
@@ -57,7 +30,7 @@ plot_map <- function(data, map=world_map, year=2018, varities='hommali', data_ty
 
     plt <- leaflet(map_joined) %>%
         addTiles() %>%
-        setView( lat=10, lng=0 , zoom=2) %>%
+        setView( lat=10, lng=0 , zoom=1) %>%
         addPolygons(
             fillColor = ~mypalette(amount),
             label = mytext,
